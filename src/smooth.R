@@ -1,9 +1,12 @@
 reload.project()
 
-ddply(prices.monthly, .(ZipCode), summarise, n=length(ZipCode))
+# Density of data:
+#ddply(prices.monthly, .(ZipCode), summarise, n=length(ZipCode))
 
-smoothed <- ddply(prices.monthly, .(ZipCode), function(df) { if(nrow(df)>50) { data.frame(date=as.Date(paste(df$MonthYear, "01", sep="-")), smoothed=ma(df$ppsqft, order=12, centre=T))}})
+smoothed <- ddply(prices.monthly, .(ZipCode), function(df) { if(nrow(df)>50) { data.frame(date=as.Date(paste(df$MonthYear, "01", sep="-")), smoothed=ma(df$ppsqft, order=6, centre=T))}})
 conn <- dbConnect(MySQL(), user="mcdon", dbname="prices")
+
+dbRemoveTable(conn, name="smoothed")
 dbWriteTable(conn, name="smoothed", value=smoothed)
 
 zipforecasts <- data.frame(
@@ -33,7 +36,6 @@ hood.forecast <- function(df) {
     zipforecasts <<- rbind(zipforecasts,ret)
   })
 }
-d_ply(prices.monthly, .(ZipCode), hood.forecast)
 
 dbRemoveTable(conn, name="zipforecasts")
 dbWriteTable(conn, name="zipforecasts", value=zipforecasts)
@@ -65,6 +67,6 @@ prices.monthly[ZipCode==11233,]
 zipcode <- as.ts(prices.monthly[ZipCode==11233, log(ppsqft)])
 model <- auto.arima(zipcode, ic="aic", seasonal=F)
 model <- auto.arima(zipcode, ic="bic", seasonal=F)
-model <- Arima(zipcode, order=c(0,1,1), seasonal=c(0,0,0), include.drift=T)
+model <- Arima(zipcode, order=c(2,1,1), seasonal=c(0,0,0), include.drift=T)
 
 plot(forecast(model, 12))

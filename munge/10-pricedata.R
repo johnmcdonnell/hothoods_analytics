@@ -18,5 +18,4 @@ prices.monthly.wholecity <- prices[,list(ppsqft=median(SalePrice/GrossSquareFeet
 prices.monthly <- prices[,list(ppsqft=median(SalePrice/GrossSquareFeet )), by=list(MonthYear, ZipCode)]
 prices.monthly[, list(ppsqft=ppsqft), by=ZipCode]
 prices.monthly[length(ppsqft)==120,ma(ppsqft, order=12, centre=T), by=ZipCode]
-head(ddply(prices.monthly, .(ZipCode), function(df) { if(nrow(df)==120) { data.frame(date=as.Date(paste(df$MonthYear, "01", sep="-")), smoothed=ma(df$ppsqft, order=12, centre=T))}}))
 
